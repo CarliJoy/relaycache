@@ -28,7 +28,7 @@ jobs:
         with:
           tool: cargo-nextest, cargo-audit, cargo-deny
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       # ── Rust checks ──────────────────────────────────────────────────────
 
@@ -82,7 +82,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v7
 
       - name: Download release binary
         uses: actions/download-artifact@v4
