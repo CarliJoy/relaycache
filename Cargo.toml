@@ -41,7 +41,7 @@ clap = { version = "4", features = ["derive", "env"] }
 humantime = "2"
 
 # SQLite (bundled = no system lib required)
-rusqlite = { version = "0.31", features = ["bundled"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
 
 # JSON serialisation for headers_json column
 serde = { version = "1", features = ["derive"] }
