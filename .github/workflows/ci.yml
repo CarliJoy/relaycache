@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+jobs:
+  build-and-check:
+    name: Build & Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest, cargo-audit, cargo-deny
+
+      - uses: astral-sh/setup-uv@v5
+
+      # ── Rust checks ──────────────────────────────────────────────────────
+
+      - name: cargo fmt
+        run: cargo fmt --check
+
+      - name: cargo check
+        run: cargo check
+
+      - name: cargo clippy
+        run: cargo clippy -- -D warnings
+
+      - name: cargo test
+        run: cargo nextest run
+
+      - name: cargo audit
+        run: cargo audit
+
+      - name: cargo deny
+        run: cargo deny check
+
+      # ── Python checks ─────────────────────────────────────────────────────
+
+      - name: ruff check
+        run: uv run ruff check .
+
+      - name: ruff format
+        run: uv run ruff format --check .
+
+      - name: mypy
+        run: uv run mypy tests/
+
+      # ── Build release binary and upload for pytest job ────────────────────
+
+      - name: cargo build --release
+        run: cargo build --release
+
+      - name: Upload release binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-binary
+          path: target/release/relaycache
+          if-no-files-found: error
+          retention-days: 1
+
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+    needs: build-and-check
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Download release binary
+        uses: actions/download-artifact@v4
+        with:
+          name: release-binary
+          path: target/release/
+
+      - name: Restore binary permissions
+        run: chmod +x target/release/relaycache
+
+      # pytest runs `cargo build --release` internally via the build_binary
+      # fixture; since the binary already exists and sources haven't changed,
+      # Cargo skips recompilation. The toolchain must still be present.
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: pytest
+        run: uv run pytest tests/ -v

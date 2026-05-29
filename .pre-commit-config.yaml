@@ -1,0 +1,73 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        language: system
+        types: [python]
+        pass_filenames: false
+        entry: uv run mypy tests/
+
+      - id: cargo-fmt
+        name: cargo fmt
+        language: system
+        types: [rust]
+        pass_filenames: false
+        entry: cargo fmt --check
+
+      - id: cargo-check
+        name: cargo check
+        # Implicitly enforces #![forbid(unsafe_code)] declared in src/main.rs.
+        language: system
+        types: [rust]
+        pass_filenames: false
+        entry: cargo check
+
+      - id: cargo-clippy
+        name: cargo clippy
+        language: system
+        types: [rust]
+        pass_filenames: false
+        entry: cargo clippy -- -D warnings
+
+      - id: cargo-test
+        name: cargo test
+        language: system
+        types: [rust]
+        pass_filenames: false
+        entry: cargo test
+
+      - id: pytest
+        name: pytest
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: uv run pytest tests/ -v
+
+      - id: cargo-install-tools
+        name: install cargo tools
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: cargo install cargo-audit cargo-deny
+
+      - id: cargo-audit
+        name: cargo audit
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: cargo audit
+
+      - id: cargo-deny
+        name: cargo deny
+        language: system
+        pass_filenames: false
+        always_run: true
+        entry: cargo deny check

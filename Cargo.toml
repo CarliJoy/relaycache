@@ -1,0 +1,58 @@
+[package]
+name = "relaycache"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+
+[[bin]]
+name = "relaycache"
+path = "src/main.rs"
+
+[dependencies]
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# HTTP server
+axum = "0.7"
+
+# HTTP client (rustls, no openssl)
+reqwest = { version = "0.12", features = ["stream", "rustls-tls-native-roots"], default-features = false }
+
+# Shared HTTP types
+http = "1"
+
+# In-memory LRU cache (async-aware, bounded)
+moka = { version = "0.12", features = ["future"] }
+
+# Streaming file bodies
+tokio-util = { version = "0.7", features = ["io"] }
+
+# Cheap refcounted byte slices
+bytes = "1"
+
+# Structured logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# CLI + env-var config
+clap = { version = "4", features = ["derive", "env"] }
+
+# Human-readable durations ("1h 30min") and sizes ("512MiB")
+humantime = "2"
+
+# SQLite (bundled = no system lib required)
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# JSON serialisation for headers_json column
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# SHA-256 for blob naming
+sha2 = "0.10"
+hex = "0.4"
+
+# Serving non-TCP listeners (Unix sockets) via hyper directly
+hyper-util = { version = "0.1", features = ["tokio", "server-auto"] }
+
+# Error handling
+anyhow = "1"
