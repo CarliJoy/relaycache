@@ -13,7 +13,7 @@ path = "src/main.rs"
 tokio = { version = "1", features = ["full"] }
 
 # HTTP server
-axum = "0.7"
+axum = "0.8"
 
 # HTTP client (rustls, no openssl)
 reqwest = { version = "0.12", features = ["stream", "rustls-tls-native-roots"], default-features = false }
