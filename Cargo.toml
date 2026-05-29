@@ -48,7 +48,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 # SHA-256 for blob naming
-sha2 = "0.10"
+sha2 = "0.11"
 hex = "0.4"
 
 # Serving non-TCP listeners (Unix sockets) via hyper directly
