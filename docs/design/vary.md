@@ -45,16 +45,17 @@ to `Vary: *`.
 This applies even when `Authorization` appears alongside other headers:
 `Vary: Accept, Authorization` → not cached.
 
-!!! note "Why not key by Authorization?"
-    One might think: hash the token and include it in the cache key, so each
-    user gets their own entry. The problems are:
+:::{note} Why not key by Authorization?
+One might think: hash the token and include it in the cache key, so each
+user gets their own entry. The problems are:
 
-    1. **Token rotation**: when tokens expire and refresh, old entries become
-       orphans that waste space but never get hits.
-    2. **Design principle violation**: the cache exists to deduplicate bytes
-       for **shared** content. Per-user content is not shared.
-    3. **Unnecessary complexity**: the origin already checks auth on every
-       request. Per-credential caching adds no security benefit.
+1. **Token rotation**: when tokens expire and refresh, old entries become
+   orphans that waste space but never get hits.
+2. **Design principle violation**: the cache exists to deduplicate bytes
+   for **shared** content. Per-user content is not shared.
+3. **Unnecessary complexity**: the origin already checks auth on every
+   request. Per-credential caching adds no security benefit.
+:::
 
 ### `Vary: Accept-Encoding`
 

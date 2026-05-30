@@ -81,10 +81,11 @@ cache-dir/
         cd91a2...
 ```
 
-!!! warning
-    Never copy `proxy.db` without `proxy.db-wal` and `proxy.db-shm` while
-    relaycache is running — you will get an inconsistent snapshot.
-    Stop relaycache first; it will checkpoint the WAL on clean shutdown.
+:::{warning}
+Never copy `proxy.db` without `proxy.db-wal` and `proxy.db-shm` while
+relaycache is running — you will get an inconsistent snapshot.
+Stop relaycache first; it will checkpoint the WAL on clean shutdown.
+:::
 
 ## Logging
 

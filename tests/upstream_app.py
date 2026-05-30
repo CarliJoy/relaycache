@@ -124,9 +124,11 @@ class Session:
 
 _PYTHON_BIN: bytes = Path(sys.executable).read_bytes()
 
-BLOBS: Mapping[str, bytes] = types.MappingProxyType({
-    "npython": _PYTHON_BIN * 10,  # ~80 MB
-})
+BLOBS: Mapping[str, bytes] = types.MappingProxyType(
+    {
+        "npython": _PYTHON_BIN * 10,  # ~80 MB
+    }
+)
 
 # ---------------------------------------------------------------------------
 # Immutable resource constants
@@ -191,6 +193,7 @@ async def stamp_response_status(request: Request, call_next: Any) -> Response:
             pass
     return response
 
+
 # ---------------------------------------------------------------------------
 # Dependencies
 # ---------------------------------------------------------------------------
@@ -213,8 +216,8 @@ def get_session(session_id: UUID, sessions: SessionsDict) -> Session:
 
 
 def record_and_check_auth(
-        request: Request,
-        session: Annotated[Session, Depends(get_session)],
+    request: Request,
+    session: Annotated[Session, Depends(get_session)],
 ) -> Session:
     """
     Append the incoming request to the session log, then enforce auth if required.
@@ -223,11 +226,13 @@ def record_and_check_auth(
     assert that the upstream received and rejected the request.
     Raises HTTP 401 if auth is required and the token is wrong or absent.
     """
-    session.log.append(LogEntry(
-        path=request.url.path,
-        method=request.method,
-        headers=[[k.decode(), v.decode()] for k, v in request.headers.raw],
-    ))
+    session.log.append(
+        LogEntry(
+            path=request.url.path,
+            method=request.method,
+            headers=[[k.decode(), v.decode()] for k, v in request.headers.raw],
+        )
+    )
     if session.settings.auth_required:
         auth = request.headers.get("authorization", "")
         if auth != f"Bearer {session.settings.valid_token}":
@@ -248,6 +253,7 @@ SessionDep = Annotated[Session, Depends(record_and_check_auth)]
 
 def _etag_matches(client_inm: str, server_etag: str) -> bool:
     """Weak comparison: strip W/ and quotes before comparing (RFC 7232 §2.3)."""
+
     def _bare(t: str) -> str:
         return t.strip().lstrip("W/").strip('"')
 
@@ -259,11 +265,11 @@ def _etag_matches(client_inm: str, server_etag: str) -> bool:
 
 
 def conditional_or_serve(
-        request: Request,
-        body: bytes,
-        etag: str,
-        last_modified: str,
-        extra_headers: dict[str, str] | None = None,
+    request: Request,
+    body: bytes,
+    etag: str,
+    last_modified: str,
+    extra_headers: dict[str, str] | None = None,
 ) -> Response:
     """
     Apply RFC 7232 conditional-GET logic, then serve the body.
@@ -305,7 +311,7 @@ def conditional_or_serve(
 
     range_hdr = request.headers.get("range", "")
     if range_hdr.startswith("bytes="):
-        spec = range_hdr[len("bytes="):]
+        spec = range_hdr[len("bytes=") :]
         start_s, _, end_s = spec.partition("-")
         start = int(start_s) if start_s else max(0, total - int(end_s))
         end = (int(end_s) + 1) if end_s else total
@@ -337,8 +343,8 @@ def create_session(session_id: UUID, sessions: SessionsDict) -> dict[str, str]:
 
 @app.patch("/tests/{session_id}")
 def update_session(
-        patch: SessionSettingsPatch,
-        session: Annotated[Session, Depends(get_session)],
+    patch: SessionSettingsPatch,
+    session: Annotated[Session, Depends(get_session)],
 ) -> SessionSettings:
     """Partially update session settings - only submitted (non-None) fields are applied."""
     updates = {k: v for k, v in patch.model_dump().items() if v is not None}
@@ -383,7 +389,10 @@ def resource(request: Request, session: SessionDep) -> Response:
     body = accept.encode() if is_specific else RESOURCE_BODY
     etag = f'"{accept}"' if is_specific else RESOURCE_ETAG
     return conditional_or_serve(
-        request, body, etag, RESOURCE_LM,
+        request,
+        body,
+        etag,
+        RESOURCE_LM,
         extra_headers={"Vary": "Accept"},
     )
 
@@ -392,7 +401,6 @@ def resource(request: Request, session: SessionDep) -> Response:
 def resource_v2(request: Request, session: SessionDep) -> Response:
     """Updated body + ETag - used by cache-invalidation tests."""
     return conditional_or_serve(request, V2_BODY, V2_ETAG, V2_LM)
-
 
 
 @app.get("/tests/{session_id}/blob/{what}")
@@ -411,7 +419,8 @@ def blob(what: str, request: Request, session: SessionDep) -> Response:
         raise HTTPException(status_code=404, detail=f"unknown blob '{what}'")
 
     return conditional_or_serve(
-        request, body,
+        request,
+        body,
         session.settings.blob_etag,
         session.settings.blob_last_modified,
     )

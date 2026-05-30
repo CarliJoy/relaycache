@@ -25,7 +25,6 @@ from __future__ import annotations
 from uuid import UUID, uuid4
 
 import httpx
-
 from upstream_app import LogEntry, SessionSettings, SessionSettingsPatch
 
 
@@ -44,7 +43,7 @@ class Upstream:
     # -- Factory -------------------------------------------------------------
 
     @classmethod
-    def create(cls, server_url: str) -> "Upstream":
+    def create(cls, server_url: str) -> Upstream:
         """Create a new session on *server_url* and return an Upstream handle."""
         session_id = uuid4()
         client = httpx.Client(base_url=server_url)

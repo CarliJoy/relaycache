@@ -21,26 +21,25 @@ Sections
 from __future__ import annotations
 
 import sys
+import threading
 from pathlib import Path
 from uuid import uuid4
 
 import httpx
 import pytest
-import threading
 import uvicorn
-
+from upstream import Upstream
 from upstream_app import (
-    LogEntry,
-    SessionSettings,
     BLOBS,
     RESOURCE_BODY,
     RESOURCE_ETAG,
     RESOURCE_LM,
     V2_BODY,
     V2_ETAG,
+    LogEntry,
+    SessionSettings,
     app,
 )
-from upstream import Upstream
 
 # ---------------------------------------------------------------------------
 # Test server fixture (session-scoped, single process)
@@ -49,13 +48,16 @@ from upstream import Upstream
 
 def _free_port() -> int:
     import socket
+
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
 
 
 def _wait_for_port(port: int, timeout: float = 5.0) -> None:
-    import socket, time
+    import socket
+    import time
+
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         try:
@@ -134,11 +136,14 @@ class TestSessionLifecycle:
         missing = str(uuid4())
         assert client.get(f"/tests/{missing}/resource").status_code == 404
         assert client.get(f"/logs/{missing}").status_code == 404
-        assert client.patch(
-            f"/tests/{missing}",
-            content=SessionSettings().model_dump_json(),
-            headers={"Content-Type": "application/json"},
-        ).status_code == 404
+        assert (
+            client.patch(
+                f"/tests/{missing}",
+                content=SessionSettings().model_dump_json(),
+                headers={"Content-Type": "application/json"},
+            ).status_code
+            == 404
+        )
 
     def test_patch_updates_settings(self, client: httpx.Client, session: str) -> None:
         new_settings = SessionSettings(auth_required=True, valid_token="tok123")
@@ -287,7 +292,7 @@ class TestConditional:
         r = client.get(
             f"/tests/{session}/resource",
             headers={
-                "If-None-Match": '"stale-tag"',   # doesn't match -> would normally 200
+                "If-None-Match": '"stale-tag"',  # doesn't match -> would normally 200
                 "If-Modified-Since": RESOURCE_LM,  # would cause 304 if evaluated
             },
         )

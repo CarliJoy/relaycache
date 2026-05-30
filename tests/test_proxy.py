@@ -35,9 +35,9 @@ from typing import Any
 import httpx
 import pytest
 import uvicorn
-
 from upstream import Upstream
-from upstream_app import BLOBS, RESOURCE_BODY, RESOURCE_ETAG, app as upstream_fastapi_app
+from upstream_app import BLOBS, RESOURCE_BODY, RESOURCE_ETAG
+from upstream_app import app as upstream_fastapi_app
 
 PROXY_BIN = Path(__file__).parent.parent / "target" / "release" / "relaycache"
 
@@ -112,13 +112,13 @@ class ProxyHandle:
 
     @classmethod
     def start(
-            cls,
-            upstream_base_url: str,
-            settings: ProxySettings,
-            binary: Path,
-            tmp_path: Path,
-            cache_dir: Path | None = None,
-    ) -> "ProxyHandle":
+        cls,
+        upstream_base_url: str,
+        settings: ProxySettings,
+        binary: Path,
+        tmp_path: Path,
+        cache_dir: Path | None = None,
+    ) -> ProxyHandle:
         """Launch a relaycache process and return a ready ProxyHandle."""
         if cache_dir is None:
             cache_dir = tmp_path / "cache"
@@ -215,9 +215,7 @@ def proxy_binary() -> Path:
 @pytest.fixture(scope="session")
 def upstream_server_url() -> Generator[str, None, None]:
     port = free_port()
-    config = uvicorn.Config(
-        upstream_fastapi_app, host="127.0.0.1", port=port, log_level="warning"
-    )
+    config = uvicorn.Config(upstream_fastapi_app, host="127.0.0.1", port=port, log_level="warning")
     server = uvicorn.Server(config)
     t = threading.Thread(target=server.run, daemon=True)
     t.start()
@@ -244,10 +242,10 @@ def _proxy_settings(request: pytest.FixtureRequest) -> ProxySettings:
 
 @pytest.fixture()
 def proxy_handle(
-        upstream: Upstream,
-        proxy_binary: Path,
-        tmp_path: Path,
-        request: pytest.FixtureRequest,
+    upstream: Upstream,
+    proxy_binary: Path,
+    tmp_path: Path,
+    request: pytest.FixtureRequest,
 ) -> Generator[ProxyHandle, None, None]:
     """
     ProxyHandle with process + client + restart capability.
@@ -297,7 +295,7 @@ class TestBasicProxy:
             assert r.headers.get("x-cache") == "HIT"
 
     def test_upstream_called_on_every_request(
-            self, client: httpx.Client, upstream: Upstream
+        self, client: httpx.Client, upstream: Upstream
     ) -> None:
         """Proxy must revalidate with upstream on every request, even cache hits."""
         client.get("/resource")
@@ -319,16 +317,12 @@ class TestBasicProxy:
 
 
 class TestViaHeader:
-    def test_via_forwarded_to_upstream(
-            self, client: httpx.Client, upstream: Upstream
-    ) -> None:
+    def test_via_forwarded_to_upstream(self, client: httpx.Client, upstream: Upstream) -> None:
         client.get("/resource")
         log = upstream.drain_log()
         assert "relaycache" in log[-1].header("via")
 
-    def test_via_appended_not_replaced(
-            self, client: httpx.Client, upstream: Upstream
-    ) -> None:
+    def test_via_appended_not_replaced(self, client: httpx.Client, upstream: Upstream) -> None:
         """relaycache must append to an existing Via, not replace it."""
         client.get("/resource", headers={"Via": "1.1 client-proxy"})
         log = upstream.drain_log()
@@ -358,7 +352,7 @@ class TestAuth:
         assert client.get("/resource").status_code == 401
 
     def test_cached_body_not_served_after_auth_enabled(
-            self, client: httpx.Client, upstream: Upstream
+        self, client: httpx.Client, upstream: Upstream
     ) -> None:
         """Core security guarantee: enabling auth takes effect immediately."""
         client.get("/resource")  # populate cache without auth
@@ -411,7 +405,7 @@ class TestRange:
         mid = len(body) // 2
         r = client.get("/blob/npython", headers={"Range": f"bytes={mid}-{mid + 1023}"})
         assert r.status_code == 206
-        assert r.content == body[mid: mid + 1024]
+        assert r.content == body[mid : mid + 1024]
 
     def test_range_content_range_header(self, client: httpx.Client) -> None:
         client.get("/blob/npython")  # prime
@@ -429,9 +423,7 @@ class TestRange:
         )
         assert r.status_code == 416
 
-    def test_range_auth_enforced(
-            self, client: httpx.Client, upstream: Upstream
-    ) -> None:
+    def test_range_auth_enforced(self, client: httpx.Client, upstream: Upstream) -> None:
         client.get("/blob/npython")  # prime without auth
         upstream.set_auth(required=True)
         r = client.get("/blob/npython", headers={"Range": "bytes=0-1023"})
@@ -445,7 +437,7 @@ class TestRange:
 
 class TestVary:
     def test_vary_accept_variants_cached_independently(
-            self, client: httpx.Client, subtests: Any
+        self, client: httpx.Client, subtests: Any
     ) -> None:
         """
         Two requests with different Accept values must produce independent cache
@@ -516,9 +508,7 @@ class TestUnixSocket:
 
 
 class TestPersistence:
-    def test_cache_survives_restart(
-            self, proxy_handle: ProxyHandle
-    ) -> None:
+    def test_cache_survives_restart(self, proxy_handle: ProxyHandle) -> None:
         proxy_handle.client.get("/resource")  # prime
         assert proxy_handle.client.get("/resource").headers.get("x-cache") == "HIT"
 
