@@ -437,7 +437,7 @@ fn read_all_entries(conn: &Connection) -> Result<Vec<EntryRow>> {
         Ok((
             row.get::<_, String>(0)?,
             row.get::<_, String>(1)?,
-            row.get::<_, u64>(2)?,
+            row.get::<_, i64>(2)? as u64,
             row.get::<_, Option<String>>(3)?,
             row.get::<_, Option<String>>(4)?,
             row.get::<_, String>(5)?,
@@ -510,7 +510,7 @@ async fn db_writer_task(conn: Connection, mut rx: mpsc::Receiver<DbOp>) {
             } => {
                 let r = conn.execute(
                     "INSERT OR IGNORE INTO blobs (sha256, size_bytes) VALUES (?1, ?2)",
-                    params![blob_sha256, blob_size],
+                    params![blob_sha256, blob_size as i64],
                 );
                 if let Err(e) = r {
                     warn!(error = %e, "DB insert blob");
@@ -589,7 +589,7 @@ async fn db_writer_task(conn: Connection, mut rx: mpsc::Receiver<DbOp>) {
                     .query_row(
                         "SELECT COUNT(*), COALESCE(SUM(size_bytes), 0) FROM blobs",
                         [],
-                        |r| Ok((r.get::<_, u64>(0)?, r.get::<_, u64>(1)?)),
+                        |r| Ok((r.get::<_, i64>(0)? as u64, r.get::<_, i64>(1)? as u64)),
                     )
                     .unwrap_or((0, 0));
                 let _ = tx.send(result);
