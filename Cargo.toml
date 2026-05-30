@@ -3,6 +3,14 @@ name = "relaycache"
 version = "0.1.0"
 edition = "2024"
 license = "MIT"
+description = "Always-revalidating HTTP caching proxy with content-addressed SQLite-backed disk cache"
+repository = "https://github.com/CarliJoy/relaycache"
+homepage = "https://github.com/CarliJoy/relaycache"
+documentation = "https://relaycache.readthedocs.io"
+readme = "README.md"
+keywords = ["http", "proxy", "cache", "caching"]
+categories = ["network-programming", "command-line-utilities"]
+rust-version = "1.85"
 
 [[bin]]
 name = "relaycache"
