@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import sys
 import threading
+from collections.abc import Generator
 from pathlib import Path
 from uuid import uuid4
 
@@ -51,7 +52,7 @@ def _free_port() -> int:
 
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+        return int(s.getsockname()[1])
 
 
 def _wait_for_port(port: int, timeout: float = 5.0) -> None:
@@ -69,7 +70,7 @@ def _wait_for_port(port: int, timeout: float = 5.0) -> None:
 
 
 @pytest.fixture(scope="session")
-def server_url() -> str:  # type: ignore[return]
+def server_url() -> Generator[str, None, None]:
     port = _free_port()
     config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
     server = uvicorn.Server(config)
@@ -82,13 +83,13 @@ def server_url() -> str:  # type: ignore[return]
 
 
 @pytest.fixture()
-def client(server_url: str) -> httpx.Client:  # type: ignore[return]
+def client(server_url: str) -> Generator[httpx.Client, None, None]:
     with httpx.Client(base_url=server_url) as c:
         yield c
 
 
 @pytest.fixture()
-def session(server_url: str) -> str:  # type: ignore[return]
+def session(server_url: str) -> Generator[str, None, None]:
     """Create a fresh session and yield its string UUID.  Deleted on teardown."""
     sid = str(uuid4())
     resp = httpx.put(f"{server_url}/tests/{sid}")
@@ -98,7 +99,7 @@ def session(server_url: str) -> str:  # type: ignore[return]
 
 
 @pytest.fixture()
-def upstream(server_url: str) -> Upstream:  # type: ignore[return]
+def upstream(server_url: str) -> Generator[Upstream, None, None]:
     """Upstream wrapper fixture - session created and destroyed automatically."""
     up = Upstream.create(server_url)
     yield up

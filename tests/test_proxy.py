@@ -30,7 +30,7 @@ import threading
 import time
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import pytest
@@ -236,7 +236,7 @@ def upstream(upstream_server_url: str) -> Generator[Upstream, None, None]:
 def _proxy_settings(request: pytest.FixtureRequest) -> ProxySettings:
     marker = request.node.get_closest_marker("proxy_settings")
     if marker and marker.args:
-        return marker.args[0]
+        return cast(ProxySettings, marker.args[0])
     return ProxySettings()
 
 

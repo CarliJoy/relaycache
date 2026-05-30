@@ -63,7 +63,7 @@ class Upstream:
 
     # -- Settings ------------------------------------------------------------
 
-    def patch_settings(self, **kwargs: object) -> SessionSettings:
+    def patch_settings(self, **kwargs: bool | str | None) -> SessionSettings:
         """
         Partially update session settings.  Only supplied kwargs are changed.
 
@@ -71,7 +71,7 @@ class Upstream:
             upstream.patch_settings(auth_required=True)
             upstream.patch_settings(blob_etag='"v2"', blob_last_modified="...")
         """
-        patch = SessionSettingsPatch(**kwargs)
+        patch = SessionSettingsPatch.model_validate(kwargs)
         resp = self._client.patch(
             f"/tests/{self._session_id}",
             content=patch.model_dump_json(),

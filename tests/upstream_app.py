@@ -51,14 +51,15 @@ duplicate names).  Import LogEntry to parse them with .header(name).
 
 from __future__ import annotations
 
+import re as _re
 import sys
 import types
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from email.utils import parsedate
 from pathlib import Path
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -148,8 +149,8 @@ V2_LM: str = "Tue, 02 Jan 2024 00:00:00 GMT"
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # type: ignore[type-arg]
-    app.state.sessions: dict[UUID, Session] = {}
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    app.state.sessions = {}
     yield
     app.state.sessions.clear()
 
@@ -168,8 +169,6 @@ app = FastAPI(title="relaycache fake upstream", lifespan=lifespan)
 # Only resource routes (paths matching /tests/{uuid}/...) are stamped;
 # management routes (/logs/*, PUT/PATCH/DELETE /tests/*) are skipped.
 
-import re as _re
-
 _RESOURCE_PATH_RE = _re.compile(
     r"^/tests/[0-9a-f-]{36}/(?!$)",  # /tests/{uuid}/<something>
     _re.IGNORECASE,
@@ -178,7 +177,7 @@ _RESOURCE_PATH_RE = _re.compile(
 
 @app.middleware("http")
 async def stamp_response_status(request: Request, call_next: Any) -> Response:
-    response = await call_next(request)
+    response = cast(Response, await call_next(request))
     if _RESOURCE_PATH_RE.match(request.url.path):
         # Extract session_id from path and stamp the last log entry
         try:
