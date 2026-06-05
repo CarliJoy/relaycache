@@ -7,13 +7,13 @@ dependencies = [
     "httpx>=0.27",
     "pydantic>=2.13.4",
     "pytest>=8",
-    "uvicorn>=0.48.0",
+    "uvicorn>=0.49.0",
 ]
 
 [dependency-groups]
 lint = [
     "mypy>=1.10",
-    "ruff>=0.5",
+    "ruff>=0.15.16",
 ]
 docs = [
     "furo",
