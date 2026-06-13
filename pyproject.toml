@@ -13,7 +13,7 @@ dependencies = [
 [dependency-groups]
 lint = [
     "mypy>=1.10",
-    "ruff>=0.5",
+    "ruff>=0.15.15",
 ]
 docs = [
     "furo",
